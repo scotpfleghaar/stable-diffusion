@@ -18,10 +18,10 @@ from scripts.image_variations import load_model_from_config
 
 @torch.no_grad()
 def sample_model(input_im, model, sampler, precision, h, w, ddim_steps, n_samples, scale, ddim_eta):
-    precision_scope = autocast if precision=="autocast" else nullcontext
+    precision_scope = autocast if precision == "autocast" else nullcontext
     with precision_scope("cuda"):
         with model.ema_scope():
-            c = model.get_learned_conditioning(input_im).tile(n_samples,1,1)
+            c = model.get_learned_conditioning(input_im).tile(n_samples, 1, 1)
 
             if scale != 1.0:
                 uc = torch.zeros_like(c)
@@ -55,7 +55,7 @@ def main(
     precision="fp32",
     h=512,
     w=512,
-    ):
+):
 
     input_im = transforms.ToTensor()(input_im).unsqueeze(0).to(device)
     input_im = input_im*2-1
@@ -66,7 +66,8 @@ def main(
     else:
         sampler = DDIMSampler(model)
 
-    x_samples_ddim = sample_model(input_im, model, sampler, precision, h, w, ddim_steps, n_samples, scale, ddim_eta)
+    x_samples_ddim = sample_model(
+        input_im, model, sampler, precision, h, w, ddim_steps, n_samples, scale, ddim_eta)
     output_ims = []
     for x_sample in x_samples_ddim:
         x_sample = 255. * rearrange(x_sample.cpu().numpy(), 'c h w -> h w c')
@@ -75,7 +76,7 @@ def main(
 
 
 description = \
-"""Generate variations on an input image using a fine-tuned version of Stable Diffision.
+    """Generate variations on an input image using a fine-tuned version of Stable Diffision.
 Trained by [Justin Pinkney](https://www.justinpinkney.com) ([@Buntworthy](https://twitter.com/Buntworthy)) at [Lambda](https://lambdalabs.com/)
 
 __Get the [code](https://github.com/justinpinkney/stable-diffusion) and [model](https://huggingface.co/lambdalabs/stable-diffusion-image-conditioned).__
@@ -85,7 +86,7 @@ __Get the [code](https://github.com/justinpinkney/stable-diffusion) and [model](
 """
 
 article = \
-"""
+    """
 ## How does this work?
 
 The normal Stable Diffusion model is trained to be conditioned on text input. This version has had the original text encoder (from CLIP) removed, and replaced with
@@ -103,9 +104,9 @@ def run_demo(
     device_idx=0,
     ckpt="models/ldm/stable-diffusion-v1/sd-clip-vit-l14-img-embed_ema_only.ckpt",
     config="configs/stable-diffusion/sd-image-condition-finetune.yaml",
-    ):
+):
 
-    device = f"cuda:{device_idx}"
+    device = torch.device('cpu')
     config = OmegaConf.load(config)
     model = load_model_from_config(config, ckpt, device=device)
 
@@ -136,8 +137,9 @@ def run_demo(
         outputs=output,
         examples=examples,
         allow_flagging="never",
-        )
+    )
     demo.launch(enable_queue=True, share=True)
+
 
 if __name__ == "__main__":
     fire.Fire(run_demo)
