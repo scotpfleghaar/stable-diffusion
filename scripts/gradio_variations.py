@@ -19,8 +19,9 @@ from scripts.image_variations import load_model_from_config
 @torch.no_grad()
 def sample_model(input_im, model, sampler, precision, h, w, ddim_steps, n_samples, scale, ddim_eta):
     precision_scope = autocast if precision == "autocast" else nullcontext
-    with precision_scope("cuda"):
+    with precision_scope():
         with model.ema_scope():
+            input_im = input_im.to(torch.device("cpu"))
             c = model.get_learned_conditioning(input_im).tile(n_samples, 1, 1)
 
             if scale != 1.0:
